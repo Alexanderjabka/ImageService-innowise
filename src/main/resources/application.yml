@@ -1,11 +1,11 @@
 server:
-  port: 8083
+  port: ${SERVER_PORT:8083}
 
 spring:
   datasource:
-    url: jdbc:postgresql://postgres:5432/postgres
-    username: gallery
-    password: gallerypass
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:gallery}}
+    username: ${SPRING_DATASOURCE_USERNAME:gallery}
+    password: ${SPRING_DATASOURCE_PASSWORD:gallerypass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -23,12 +23,12 @@ spring:
 cloud:
   aws:
     credentials:
-      access-key: test
-      secret-key: test
+      access-key: ${AWS_ACCESS_KEY:test}
+      secret-key: ${AWS_SECRET_KEY:test}
     region:
-      static: us-east-1
+      static: ${AWS_REGION:us-east-1}
     s3:
-      endpoint: http://localstack:4566
-      bucket: images
+      endpoint: ${AWS_S3_ENDPOINT:http://localstack:4566}
+      bucket: ${AWS_S3_BUCKET:images}
     stack:
       auto: false

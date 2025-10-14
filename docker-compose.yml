@@ -5,11 +5,11 @@ services:
     image: localstack/localstack:1.4
     container_name: localstack
     ports:
-      - "4566:4566"
+      - "${LOCALSTACK_PORT:-4566}:4566"
     environment:
       - SERVICES=s3
-      - DEFAULT_REGION=us-east-1
-      - DEBUG=1
+      - DEFAULT_REGION=${AWS_REGION}
+      - DEBUG=${LOCALSTACK_DEBUG:-1}
     volumes:
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -19,11 +19,11 @@ services:
     image: postgres:15
     container_name: postgres
     environment:
-      POSTGRES_USER: gallery
-      POSTGRES_PASSWORD: gallerypass
-      POSTGRES_DB: gallery
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
 
@@ -36,14 +36,15 @@ services:
       - postgres
       - localstack
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gallery
-      SPRING_DATASOURCE_USERNAME: gallery
-      SPRING_DATASOURCE_PASSWORD: gallerypass
-      AWS_S3_ENDPOINT: http://localstack:4566
-      AWS_S3_BUCKET: images
-      AWS_REGION: us-east-1
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      AWS_S3_ENDPOINT: ${AWS_S3_ENDPOINT}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_REGION: ${AWS_REGION}
+      SERVER_PORT: ${SERVER_PORT:-8083}
     ports:
-      - "8083:8083"
+      - "${SERVER_PORT:-8083}:8083"
 
 volumes:
   pg-data:

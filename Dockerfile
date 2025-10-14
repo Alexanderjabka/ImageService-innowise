@@ -1,6 +1,3 @@
-# =========================
-# 🔹 STAGE 1 — Maven Build
-# =========================
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
@@ -10,9 +7,6 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 \
     mvn clean install -DskipTests
 
-# =========================
-# 🔹 STAGE 2 — Создание custom JRE
-# =========================
 FROM eclipse-temurin:21-jdk-jammy AS jre-builder
 WORKDIR /opt/build
 
@@ -28,9 +22,6 @@ RUN $JAVA_HOME/bin/jlink \
     --compress=2 \
     --output /opt/jdk
 
-# =========================
-# 🔹 STAGE 3 — Final Image
-# =========================
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
