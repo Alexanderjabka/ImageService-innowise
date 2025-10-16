@@ -2,6 +2,11 @@ server:
   port: ${SERVER_PORT:8083}
 
 spring:
+  application:
+    name: image-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:gallery}}
     username: ${SPRING_DATASOURCE_USERNAME:gallery}
@@ -19,6 +24,23 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
 
 cloud:
   aws:

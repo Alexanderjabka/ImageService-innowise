@@ -2,6 +2,12 @@ databaseChangeLog:
   - changeSet:
       id: 004-create-likes-table
       author: io.github.Alexanderjabka
+      preConditions:
+        - onFail: CONTINUE
+        - not:
+            tableExists:
+              schemaName: gallery
+              tableName: likes
       changes:
         - createTable:
             schemaName: gallery
@@ -32,3 +38,7 @@ databaseChangeLog:
                   type: TIMESTAMP
                   constraints:
                     nullable: false
+      rollback:
+        - dropTable:
+            schemaName: gallery
+            tableName: likes

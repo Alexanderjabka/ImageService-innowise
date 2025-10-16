@@ -2,6 +2,12 @@ databaseChangeLog:
   - changeSet:
       id: 002-create-images-table
       author: io.github.Alexanderjabka
+      preConditions:
+        - onFail: CONTINUE
+        - not:
+            tableExists:
+              schemaName: gallery
+              tableName: images
       changes:
         - createTable:
             schemaName: gallery
@@ -33,3 +39,7 @@ databaseChangeLog:
                   type: BIGINT
                   constraints:
                     nullable: false
+      rollback:
+        - dropTable:
+            schemaName: gallery
+            tableName: images
