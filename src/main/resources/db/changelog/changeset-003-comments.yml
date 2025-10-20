@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-comments-table
+      author: io.github.Alexanderjabka
+      preConditions:
+        - onFail: CONTINUE
+        - not:
+            tableExists:
+              schemaName: gallery
+              tableName: comments
+      changes:
+        - createTable:
+            schemaName: gallery
+            tableName: comments
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: image_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_comments_images
+                    referencedTableSchemaName: gallery
+                    referencedTableName: images
+                    referencedColumnNames: id
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            schemaName: gallery
+            tableName: comments

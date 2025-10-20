@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-schema
+      author: io.github.Alexanderjabka
+      preConditions:
+        - onFail: CONTINUE
+        - not:
+            sqlCheck:
+              expectedResult: 1
+              sql: SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name = 'gallery'
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS gallery;
+      rollback:
+        - sql:
+            sql: DROP SCHEMA IF EXISTS gallery CASCADE;

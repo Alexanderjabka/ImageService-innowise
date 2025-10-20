@@ -1,0 +1,56 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: image-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:gallery}}
+    username: ${SPRING_DATASOURCE_USERNAME:gallery}
+    password: ${SPRING_DATASOURCE_PASSWORD:gallerypass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY:test}
+      secret-key: ${AWS_SECRET_KEY:test}
+    region:
+      static: ${AWS_REGION:us-east-1}
+    s3:
+      endpoint: ${AWS_S3_ENDPOINT:http://localstack:4566}
+      bucket: ${AWS_S3_BUCKET:images}
+    stack:
+      auto: false

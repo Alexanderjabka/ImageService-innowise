@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+*.env
+.env
+
+localstack-data/logs/localstack_infra.err
+localstack-data/logs/localstack_infra.log
