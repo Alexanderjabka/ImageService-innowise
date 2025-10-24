@@ -1,0 +1,587 @@
+{
+	"info": {
+		"_postman_id": "image-service-collection",
+		"name": "ImageService API",
+		"description": "Коллекция для тестирования ImageService - микросервис для работы с изображениями",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/actuator/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"actuator",
+						"health"
+					]
+				},
+				"description": "Проверка состояния сервиса"
+			},
+			"response": []
+		},
+		{
+			"name": "Metrics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/actuator/metrics",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"actuator",
+						"metrics"
+					]
+				},
+				"description": "Получение метрик сервиса"
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Image",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Файл изображения"
+						},
+						{
+							"key": "description",
+							"value": "Test image description",
+							"type": "text",
+							"description": "Описание изображения"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/images",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images"
+					]
+				},
+				"description": "Загрузка изображения в S3 и сохранение метаданных в БД"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Image by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}"
+					]
+				},
+				"description": "Получение изображения по ID"
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Images",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images?page={{page}}&size={{size}}&sortBy={{sortBy}}&sortDirection={{sortDirection}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "{{page}}",
+							"description": "Номер страницы (начиная с 0)"
+						},
+						{
+							"key": "size",
+							"value": "{{size}}",
+							"description": "Размер страницы"
+						},
+						{
+							"key": "sortBy",
+							"value": "{{sortBy}}",
+							"description": "Поле для сортировки"
+						},
+						{
+							"key": "sortDirection",
+							"value": "{{sortDirection}}",
+							"description": "Направление сортировки (asc/desc)"
+						}
+					]
+				},
+				"description": "Получение всех изображений с пагинацией"
+			},
+			"response": []
+		},
+		{
+			"name": "Get User Images",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/{{userId}}/images?page={{page}}&size={{size}}&sortBy={{sortBy}}&sortDirection={{sortDirection}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"{{userId}}",
+						"images"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "{{page}}",
+							"description": "Номер страницы (начиная с 0)"
+						},
+						{
+							"key": "size",
+							"value": "{{size}}",
+							"description": "Размер страницы"
+						},
+						{
+							"key": "sortBy",
+							"value": "{{sortBy}}",
+							"description": "Поле для сортировки"
+						},
+						{
+							"key": "sortDirection",
+							"value": "{{sortDirection}}",
+							"description": "Направление сортировки (asc/desc)"
+						}
+					]
+				},
+				"description": "Получение всех изображений конкретного пользователя"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Image",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}"
+					]
+				},
+				"description": "Удаление изображения (только владелец)"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Comment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"text\": \"Great image!\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/comments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"comments"
+					]
+				},
+				"description": "Добавление комментария к изображению"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Image Comments",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/comments?page={{page}}&size={{size}}&sortBy={{sortBy}}&sortDirection={{sortDirection}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"comments"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "{{page}}",
+							"description": "Номер страницы (начиная с 0)"
+						},
+						{
+							"key": "size",
+							"value": "{{size}}",
+							"description": "Размер страницы"
+						},
+						{
+							"key": "sortBy",
+							"value": "{{sortBy}}",
+							"description": "Поле для сортировки"
+						},
+						{
+							"key": "sortDirection",
+							"value": "{{sortDirection}}",
+							"description": "Направление сортировки (asc/desc)"
+						}
+					]
+				},
+				"description": "Получение комментариев к изображению"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Comment",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"text\": \"Updated comment text\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/comments/{{commentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"comments",
+						"{{commentId}}"
+					]
+				},
+				"description": "Обновление комментария (только автор)"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Comment",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/comments/{{commentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"comments",
+						"{{commentId}}"
+					]
+				},
+				"description": "Удаление комментария (только автор)"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Comment by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/comments/{{commentId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"comments",
+						"{{commentId}}"
+					]
+				},
+				"description": "Получение комментария по ID"
+			},
+			"response": []
+		},
+		{
+			"name": "Toggle Like",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/likes",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"likes"
+					]
+				},
+				"description": "Поставить/убрать лайк (toggle)"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Like Status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwtToken}}",
+						"description": "JWT токен для аутентификации"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/images/{{imageId}}/likes",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"images",
+						"{{imageId}}",
+						"likes"
+					]
+				},
+				"description": "Получение статуса лайка пользователя"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Автоматическая установка переменных",
+					"if (!pm.environment.get('baseUrl')) {",
+					"    pm.environment.set('baseUrl', 'http://localhost:8083');",
+					"}",
+					"if (!pm.environment.get('jwtToken')) {",
+					"    pm.environment.set('jwtToken', 'your-jwt-token-here');",
+					"}",
+					"if (!pm.environment.get('imageId')) {",
+					"    pm.environment.set('imageId', '1');",
+					"}",
+					"if (!pm.environment.get('commentId')) {",
+					"    pm.environment.set('commentId', '1');",
+					"}",
+					"if (!pm.environment.get('page')) {",
+					"    pm.environment.set('page', '0');",
+					"}",
+					"if (!pm.environment.get('size')) {",
+					"    pm.environment.set('size', '10');",
+					"}",
+					"if (!pm.environment.get('sortBy')) {",
+					"    pm.environment.set('sortBy', 'uploadedAt');",
+					"}",
+					"if (!pm.environment.get('sortDirection')) {",
+					"    pm.environment.set('sortDirection', 'desc');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Автоматическое извлечение ID из ответов",
+					"if (pm.response.code === 201 && pm.response.json()) {",
+					"    const response = pm.response.json();",
+					"    if (response.id) {",
+					"        if (pm.request.url.path.includes('images') && !pm.request.url.path.includes('comments')) {",
+					"            pm.environment.set('imageId', response.id);",
+					"            console.log('Image ID saved:', response.id);",
+					"        } else if (pm.request.url.path.includes('comments')) {",
+					"            pm.environment.set('commentId', response.id);",
+					"            console.log('Comment ID saved:', response.id);",
+					"        }",
+					"    }",
+					"}",
+					"",
+					"// Проверка статуса ответа",
+					"pm.test('Status code is successful', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+					"});",
+					"",
+					"// Проверка времени ответа",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8083",
+			"type": "string"
+		},
+		{
+			"key": "jwtToken",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		},
+		{
+			"key": "imageId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "commentId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "page",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "size",
+			"value": "10",
+			"type": "string"
+		},
+		{
+			"key": "sortBy",
+			"value": "uploadedAt",
+			"type": "string"
+		},
+		{
+			"key": "sortDirection",
+			"value": "desc",
+			"type": "string"
+		}
+	]
+}
+
