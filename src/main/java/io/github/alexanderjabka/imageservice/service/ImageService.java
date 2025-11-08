@@ -5,6 +5,9 @@ import io.github.alexanderjabka.imageservice.dto.PageResponse;
 import io.github.alexanderjabka.imageservice.entity.Comment;
 import io.github.alexanderjabka.imageservice.entity.Image;
 import io.github.alexanderjabka.imageservice.entity.Like;
+import io.github.alexanderjabka.imageservice.exception.CommentNotFoundException;
+import io.github.alexanderjabka.imageservice.exception.ForbiddenException;
+import io.github.alexanderjabka.imageservice.exception.ImageNotFoundException;
 import io.github.alexanderjabka.imageservice.repository.CommentRepository;
 import io.github.alexanderjabka.imageservice.repository.ImageRepository;
 import io.github.alexanderjabka.imageservice.repository.LikeRepository;
@@ -33,17 +36,19 @@ public class ImageService {
 
     public ImageMetadataResponse uploadImage(MultipartFile file, String description, Long userId) throws IOException {
         String key = s3Service.upload(file);
-        Image image = new Image();
-        image.setUrl(key);
-        image.setDescription(description);
-        image.setUploadedAt(Instant.now());
-        image.setUserId(userId);
-        Image saved = imageRepository.save(image);
-        return toResponse(saved);
+        
+        Image image = Image.builder()
+                .url(key)
+                .description(description)
+                .uploadedAt(Instant.now())
+                .userId(userId)
+                .build();
+        
+        return toResponse(imageRepository.save(image));
     }
 
     public Image getImageEntity(Long id) {
-        return imageRepository.findById(id).orElseThrow(() -> new RuntimeException("Image not found"));
+        return imageRepository.findById(id).orElseThrow(() -> new ImageNotFoundException(id));
     }
 
     public ImageMetadataResponse getImageMetadata(Long id) {
@@ -70,7 +75,7 @@ public class ImageService {
     public void deleteImage(Long id, Long userId) {
         Image image = getImageEntity(id);
         if (!image.getUserId().equals(userId)) {
-            throw new RuntimeException("Forbidden: You can only delete your own images");
+            throw new ForbiddenException("You can only delete your own images");
         }
         s3Service.delete(image.getUrl());
         imageRepository.deleteById(id);
@@ -111,37 +116,36 @@ public class ImageService {
 
     public void toggleLike(Long imageId, Long userId) {
         getImageEntity(imageId);
-        likeRepository.findByImageIdAndUserId(imageId, userId).ifPresentOrElse(
-                likeRepository::delete,
-                () -> {
-                    Like like = new Like();
-                    like.setImageId(imageId);
-                    like.setUserId(userId);
-                    like.setCreatedAt(Instant.now());
-                    likeRepository.save(like);
-                }
-        );
+        likeRepository.findByImageIdAndUserId(imageId, userId)
+                .ifPresentOrElse(
+                        likeRepository::delete,
+                        () -> likeRepository.save(Like.builder()
+                                .imageId(imageId)
+                                .userId(userId)
+                                .createdAt(Instant.now())
+                                .build())
+                );
     }
 
     public void addComment(Long imageId, Long userId, String text) {
         getImageEntity(imageId);
-        Comment comment = new Comment();
-        comment.setImageId(imageId);
-        comment.setUserId(userId);
-        comment.setText(text);
-        comment.setCreatedAt(Instant.now());
-        commentRepository.save(comment);
+        commentRepository.save(Comment.builder()
+                .imageId(imageId)
+                .userId(userId)
+                .text(text)
+                .createdAt(Instant.now())
+                .build());
     }
 
     public void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findByIdAndUserId(commentId, userId)
-                .orElseThrow(() -> new RuntimeException("Comment not found or forbidden"));
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
         commentRepository.delete(comment);
     }
 
     public void updateComment(Long commentId, Long userId, String text) {
         Comment comment = commentRepository.findByIdAndUserId(commentId, userId)
-                .orElseThrow(() -> new RuntimeException("Comment not found or forbidden"));
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
         comment.setText(text);
         commentRepository.save(comment);
     }

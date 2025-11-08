@@ -37,3 +37,10 @@ build/
 
 localstack-data/logs/localstack_infra.err
 localstack-data/logs/localstack_infra.log
+localstack-data/
+
+*.pem
+*.pem.crt
+*.pem.key
+*.crt
+*.key

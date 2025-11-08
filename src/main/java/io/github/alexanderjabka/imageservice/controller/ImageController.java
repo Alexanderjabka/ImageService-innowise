@@ -25,7 +25,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import java.io.IOException;
+import java.util.Optional;
 
 @RestController
 @Validated
@@ -42,9 +44,11 @@ public class ImageController {
             Authentication authentication
     ) throws IOException {
         Long userId = (Long) authentication.getPrincipal();
-        if (description == null) description = "";
-        ImageMetadataResponse response = imageService.uploadImage(file, description, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        String imageDescription = description != null ? description : "";
+        
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(imageService.uploadImage(file, imageDescription, userId));
     }
 
     @GetMapping("/images/{id}")
@@ -54,20 +58,22 @@ public class ImageController {
 
     @GetMapping("/images/{id}/content")
     public ResponseEntity<InputStreamResource> getImageContent(@PathVariable Long id) {
-        String key = imageService.getS3Key(id);
-        S3Object s3Object = s3Service.getObject(key);
-        MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
-        if (s3Object.getObjectMetadata().getContentType() != null) {
-            try {
-                contentType = MediaType.parseMediaType(s3Object.getObjectMetadata().getContentType());
-            } catch (Exception ignored) {
-            }
-        }
-        InputStreamResource resource = new InputStreamResource(s3Object.getObjectContent());
+        S3Object s3Object = s3Service.getObject(imageService.getS3Key(id));
+        
+        MediaType contentType = Optional.ofNullable(s3Object.getObjectMetadata().getContentType())
+                .map(type -> {
+                    try {
+                        return MediaType.parseMediaType(type);
+                    } catch (Exception e) {
+                        return MediaType.APPLICATION_OCTET_STREAM;
+                    }
+                })
+                .orElse(MediaType.APPLICATION_OCTET_STREAM);
+        
         return ResponseEntity.ok()
                 .contentType(contentType)
                 .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
-                .body(resource);
+                .body(new InputStreamResource(s3Object.getObjectContent()));
     }
 
     @DeleteMapping("/images/{id}")
@@ -86,11 +92,8 @@ public class ImageController {
             @RequestParam(defaultValue = "desc") String sortDirection,
             Authentication authentication
     ) {
-        Long userId = (Long) authentication.getPrincipal();
-        PageResponse<ImageMetadataResponse> response = imageService.getUserImagesWithPagination(
-                userId, page, size, limit, sortBy, sortDirection
-        );
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(imageService.getUserImagesWithPagination(
+                (Long) authentication.getPrincipal(), page, size, limit, sortBy, sortDirection));
     }
 
     @GetMapping("/images")
@@ -101,37 +104,44 @@ public class ImageController {
             @RequestParam(defaultValue = "uploadedAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection
     ) {
-        PageResponse<ImageMetadataResponse> response = imageService.getAllImagesWithPagination(
-                page, size, limit, sortBy, sortDirection
-        );
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(imageService.getAllImagesWithPagination(
+                page, size, limit, sortBy, sortDirection));
     }
 
     @PostMapping("/images/{id}/likes")
     public ResponseEntity<Void> toggleLike(@PathVariable Long id, Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        imageService.toggleLike(id, userId);
+        imageService.toggleLike(id, (Long) authentication.getPrincipal());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/images/{id}/comments")
-    public ResponseEntity<Void> addComment(@PathVariable Long id, @RequestBody CommentRequest request, Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        imageService.addComment(id, userId, request.getText());
+    public ResponseEntity<Void> addComment(
+            @PathVariable Long id,
+            @RequestBody @Valid CommentRequest request,
+            Authentication authentication
+    ) {
+        imageService.addComment(id, (Long) authentication.getPrincipal(), request.getText());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping("/images/{id}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long id, @PathVariable Long commentId, Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        imageService.deleteComment(commentId, userId);
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long id,
+            @PathVariable Long commentId,
+            Authentication authentication
+    ) {
+        imageService.deleteComment(commentId, (Long) authentication.getPrincipal());
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/images/{id}/comments/{commentId}")
-    public ResponseEntity<Void> updateComment(@PathVariable Long id, @PathVariable Long commentId, @RequestBody CommentRequest request, Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        imageService.updateComment(commentId, userId, request.getText());
+    public ResponseEntity<Void> updateComment(
+            @PathVariable Long id,
+            @PathVariable Long commentId,
+            @RequestBody @Valid CommentRequest request,
+            Authentication authentication
+    ) {
+        imageService.updateComment(commentId, (Long) authentication.getPrincipal(), request.getText());
         return ResponseEntity.ok().build();
     }
 }

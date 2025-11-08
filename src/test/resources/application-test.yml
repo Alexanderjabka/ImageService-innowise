@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: ImageService-Test
+  
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yml
+
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: us-east-1
+    s3:
+      bucket: test-bucket
+      endpoint: http://localhost:4566
+
+jwt:
+  secret: test-secret-key-for-testing-purposes-only-do-not-use-in-production
+  expiration: 3600000
+
+JWT_SECRET: test-secret-key-for-testing-purposes-only-do-not-use-in-production-must-be-at-least-256-bits
+
+AWS_ACCESS_KEY: test-access-key
+AWS_SECRET_KEY: test-secret-key
+AWS_REGION: us-east-1
+AWS_S3_ENDPOINT: http://localhost:4566
+AWS_S3_BUCKET: test-bucket
+
+SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+SPRING_DATASOURCE_USERNAME: test
+SPRING_DATASOURCE_PASSWORD: test
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    enabled-by-default: false
