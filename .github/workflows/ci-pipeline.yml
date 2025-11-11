@@ -10,7 +10,6 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 jobs:
-  # Job 1: Подготовка окружения
   setup:
     name: Setup Environment
     runs-on: ubuntu-latest
@@ -28,7 +27,6 @@ jobs:
           cache: 'maven'
 
 
-  # Job 2: Сборка проекта
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -54,7 +52,6 @@ jobs:
           path: target/
           retention-days: 1
 
-  # Job 3: Запуск тестов
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -81,7 +78,6 @@ jobs:
           path: target/surefire-reports/
           retention-days: 1
 
-  # Job 4: Анализ кода в SonarCloud
   code-analysis:
     name: Code Analysis (SonarCloud)
     runs-on: ubuntu-latest
@@ -107,7 +103,6 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-  # Job 5: Сборка Docker образа
   build-docker-image:
     name: Build Docker Image
     runs-on: ubuntu-latest
@@ -148,7 +143,6 @@ jobs:
           path: imageservice.tar
           retention-days: 1
 
-  # Job 6: Публикация Docker образа в Docker Hub
   publish-docker-image:
     name: Publish Docker Image
     runs-on: ubuntu-latest
