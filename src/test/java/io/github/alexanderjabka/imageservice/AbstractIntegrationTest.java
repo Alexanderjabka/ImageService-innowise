@@ -18,8 +18,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
@@ -27,39 +25,37 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Testcontainers
 @Import(TestSecurityConfig.class)
 public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected MockMvc mockMvc;
 
-    @Container
-    protected static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgres:15")
-    )
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
-    @Container
-    protected static LocalStackContainer localStackContainer = new LocalStackContainer(
-            DockerImageName.parse("localstack/localstack:3.0")
-    )
-            .withServices(S3);  
+    protected static PostgreSQLContainer<?> postgresContainer;
+    protected static LocalStackContainer localStackContainer;
     protected static AmazonS3 s3Client;
+
+    static {
+        postgresContainer = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15"))
+                .withDatabaseName("testdb")
+                .withUsername("test")
+                .withPassword("test");
+        postgresContainer.start();
+
+        localStackContainer = new LocalStackContainer(DockerImageName.parse("localstack/localstack:3.0"))
+                .withServices(S3);
+        localStackContainer.start();
+    }
 
     @Value("${cloud.aws.s3.bucket}")
     protected String bucketName;
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        // Database properties
         registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
         registry.add("spring.datasource.username", postgresContainer::getUsername);
         registry.add("spring.datasource.password", postgresContainer::getPassword);
 
-        // S3/LocalStack properties
         registry.add("cloud.aws.s3.endpoint", () -> localStackContainer.getEndpointOverride(S3).toString());
         registry.add("cloud.aws.region.static", localStackContainer::getRegion);
         registry.add("cloud.aws.credentials.access-key", localStackContainer::getAccessKey);
