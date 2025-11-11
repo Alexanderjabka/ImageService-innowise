@@ -3,6 +3,9 @@ spring:
     name: ImageService-Test
   
   datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: test
+    password: test
     driver-class-name: org.postgresql.Driver
   
   jpa:
