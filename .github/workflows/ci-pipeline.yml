@@ -98,7 +98,7 @@ jobs:
       - name: SonarCloud Analysis
         run: |
           mvn -B verify sonar:sonar \
-            -Dsonar.projectKey=Alexanderjabka_ImageService \
+            -Dsonar.projectKey=Alexanderjabka_ImageService-innowise \
             -Dsonar.organization=alexanderjabka \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
