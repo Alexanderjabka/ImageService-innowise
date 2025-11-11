@@ -27,13 +27,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Cache Maven dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
   # Job 2: Сборка проекта
   build:
@@ -55,7 +48,7 @@ jobs:
         run: mvn -B clean compile
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: target/
@@ -82,7 +75,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: target/surefire-reports/
@@ -149,7 +142,7 @@ jobs:
         run: docker save ${{ secrets.DOCKERHUB_USERNAME }}/imageservice:latest -o imageservice.tar
 
       - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: imageservice.tar
@@ -162,7 +155,7 @@ jobs:
     needs: build-docker-image
     steps:
       - name: Download Docker image artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
 
