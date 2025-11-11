@@ -40,16 +40,13 @@ public abstract class AbstractIntegrationTest {
     )
             .withDatabaseName("testdb")
             .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);  // Переиспользуем контейнер между тестами
+            .withPassword("test");
 
     @Container
     protected static LocalStackContainer localStackContainer = new LocalStackContainer(
             DockerImageName.parse("localstack/localstack:3.0")
     )
-            .withServices(S3)
-            .withReuse(true);  // Переиспользуем контейнер между тестами
-
+            .withServices(S3);  
     protected static AmazonS3 s3Client;
 
     @Value("${cloud.aws.s3.bucket}")
