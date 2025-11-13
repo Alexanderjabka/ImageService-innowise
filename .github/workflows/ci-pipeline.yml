@@ -118,10 +118,7 @@ jobs:
   build-docker-image:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs:
-      - test
-      - code-analysis
-    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || needs.code-analysis.result == 'skipped' }}
+    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
