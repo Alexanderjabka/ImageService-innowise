@@ -81,6 +81,7 @@ jobs:
     name: Code Analysis (SonarCloud)
     runs-on: ubuntu-latest
     needs: test
+    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -102,16 +103,25 @@ jobs:
 
       - name: SonarCloud Analysis
         run: |
-          mvn -B sonar:sonar \
-            -Dsonar.projectKey=Alexanderjabka_ImageService-innowise \
+          SONAR_ARGS="-Dsonar.projectKey=Alexanderjabka_ImageService-innowise \
             -Dsonar.organization=alexanderjabka \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SONAR_ARGS="$SONAR_ARGS \
+              -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
+              -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+              -Dsonar.pullrequest.base=${{ github.base_ref }}"
+          fi
+          mvn -B sonar:sonar $SONAR_ARGS
 
   build-docker-image:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: code-analysis
+    needs:
+      - test
+      - code-analysis
+    if: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || needs.code-analysis.result == 'skipped' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
