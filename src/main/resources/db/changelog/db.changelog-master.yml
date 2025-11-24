@@ -7,3 +7,5 @@ databaseChangeLog:
                   file: db/changelog/changeset-003-comments.yml
         - include:
                   file: db/changelog/changeset-004-likes.yml
+        - include:
+                  file: db/changelog/changeset-005-comments-extra-fields.yml
