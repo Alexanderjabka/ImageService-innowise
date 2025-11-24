@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface LikeRepository extends JpaRepository<Like, Long> {
     Optional<Like> findByImageIdAndUserId(Long imageId, Long userId);
     long countByImageId(Long imageId);
+    boolean existsByImageIdAndUserId(Long imageId, Long userId);
 }

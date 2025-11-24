@@ -1,6 +1,8 @@
 package io.github.alexanderjabka.imageservice.service;
 
+import io.github.alexanderjabka.imageservice.dto.CommentResponse;
 import io.github.alexanderjabka.imageservice.dto.ImageMetadataResponse;
+import io.github.alexanderjabka.imageservice.dto.LikeToggleResponse;
 import io.github.alexanderjabka.imageservice.dto.PageResponse;
 import io.github.alexanderjabka.imageservice.entity.Comment;
 import io.github.alexanderjabka.imageservice.entity.Image;
@@ -56,6 +58,7 @@ class ImageServiceTest {
     private Image testImage;
     private static final Long TEST_USER_ID = 1L;
     private static final Long TEST_IMAGE_ID = 100L;
+    private static final String TEST_USERNAME = "test-user";
 
     @BeforeEach
     void setUp() {
@@ -149,7 +152,7 @@ class ImageServiceTest {
         when(imageRepository.findById(TEST_IMAGE_ID)).thenReturn(Optional.of(testImage));
 
         // When
-        ImageMetadataResponse response = imageService.getImageMetadata(TEST_IMAGE_ID);
+        ImageMetadataResponse response = imageService.getImageMetadata(TEST_IMAGE_ID, TEST_USER_ID);
 
         // Then
         assertThat(response).isNotNull();
@@ -171,7 +174,7 @@ class ImageServiceTest {
         when(imageRepository.findAll(pageable)).thenReturn(imagePage);
 
         // When
-        Page<ImageMetadataResponse> result = imageService.getAllImages(pageable);
+        Page<ImageMetadataResponse> result = imageService.getAllImages(pageable, TEST_USER_ID);
 
         // Then
         assertThat(result.getContent()).hasSize(2);
@@ -274,7 +277,7 @@ class ImageServiceTest {
 
         // When
         PageResponse<ImageMetadataResponse> result = imageService.getAllImagesWithPagination(
-                1, 20, null, "uploadedAt", "asc"
+                TEST_USER_ID, 1, 20, null, "uploadedAt", "asc"
         );
 
         // Then
@@ -291,7 +294,9 @@ class ImageServiceTest {
         when(likeRepository.save(any(Like.class))).thenReturn(new Like());
 
         // When
-        imageService.toggleLike(TEST_IMAGE_ID, TEST_USER_ID);
+        when(likeRepository.countByImageId(TEST_IMAGE_ID)).thenReturn(1L);
+
+        LikeToggleResponse response = imageService.toggleLike(TEST_IMAGE_ID, TEST_USER_ID);
 
         // Then
         ArgumentCaptor<Like> likeCaptor = ArgumentCaptor.forClass(Like.class);
@@ -301,6 +306,8 @@ class ImageServiceTest {
         assertThat(savedLike.getImageId()).isEqualTo(TEST_IMAGE_ID);
         assertThat(savedLike.getUserId()).isEqualTo(TEST_USER_ID);
         assertThat(savedLike.getCreatedAt()).isNotNull();
+        assertThat(response.isLiked()).isTrue();
+        assertThat(response.getLikesCount()).isEqualTo(1L);
     }
 
     @Test
@@ -316,11 +323,14 @@ class ImageServiceTest {
         doNothing().when(likeRepository).delete(existingLike);
 
         // When
-        imageService.toggleLike(TEST_IMAGE_ID, TEST_USER_ID);
+        when(likeRepository.countByImageId(TEST_IMAGE_ID)).thenReturn(0L);
+
+        LikeToggleResponse response = imageService.toggleLike(TEST_IMAGE_ID, TEST_USER_ID);
 
         // Then
         verify(likeRepository, times(1)).delete(existingLike);
         verify(likeRepository, never()).save(any(Like.class));
+        assertThat(response.isLiked()).isFalse();
     }
 
     @Test
@@ -328,10 +338,14 @@ class ImageServiceTest {
         // Given
         String commentText = "Great image!";
         when(imageRepository.findById(TEST_IMAGE_ID)).thenReturn(Optional.of(testImage));
-        when(commentRepository.save(any(Comment.class))).thenReturn(new Comment());
+        when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+            Comment saved = invocation.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
 
         // When
-        imageService.addComment(TEST_IMAGE_ID, TEST_USER_ID, commentText);
+        CommentResponse response = imageService.addComment(TEST_IMAGE_ID, TEST_USER_ID, TEST_USERNAME, commentText);
 
         // Then
         ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
@@ -340,8 +354,11 @@ class ImageServiceTest {
         Comment savedComment = commentCaptor.getValue();
         assertThat(savedComment.getImageId()).isEqualTo(TEST_IMAGE_ID);
         assertThat(savedComment.getUserId()).isEqualTo(TEST_USER_ID);
+        assertThat(savedComment.getUsername()).isEqualTo(TEST_USERNAME);
         assertThat(savedComment.getText()).isEqualTo(commentText);
         assertThat(savedComment.getCreatedAt()).isNotNull();
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getUsername()).isEqualTo(TEST_USERNAME);
     }
 
     @Test
@@ -350,7 +367,7 @@ class ImageServiceTest {
         when(imageRepository.findById(TEST_IMAGE_ID)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> imageService.addComment(TEST_IMAGE_ID, TEST_USER_ID, "Comment"))
+        assertThatThrownBy(() -> imageService.addComment(TEST_IMAGE_ID, TEST_USER_ID, TEST_USERNAME, "Comment"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Image not found with id:");
 
@@ -398,12 +415,15 @@ class ImageServiceTest {
         comment.setId(commentId);
         comment.setUserId(TEST_USER_ID);
         comment.setText("Old text");
+        comment.setUsername(TEST_USERNAME);
+        comment.setCreatedAt(Instant.now());
+        comment.setUpdatedAt(Instant.now());
 
         when(commentRepository.findByIdAndUserId(commentId, TEST_USER_ID)).thenReturn(Optional.of(comment));
         when(commentRepository.save(any(Comment.class))).thenReturn(comment);
 
         // When
-        imageService.updateComment(commentId, TEST_USER_ID, newText);
+        CommentResponse response = imageService.updateComment(commentId, TEST_USER_ID, newText);
 
         // Then
         ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
@@ -411,6 +431,7 @@ class ImageServiceTest {
 
         Comment updatedComment = commentCaptor.getValue();
         assertThat(updatedComment.getText()).isEqualTo(newText);
+        assertThat(response.getText()).isEqualTo(newText);
     }
 
     @Test

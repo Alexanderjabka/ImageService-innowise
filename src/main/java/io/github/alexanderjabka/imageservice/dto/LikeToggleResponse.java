@@ -6,20 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Instant;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImageMetadataResponse {
-    private Long id;
-    private String description;
-    private Instant uploadedAt;
-    private Long userId;
-    private String contentUrl;
+public class LikeToggleResponse {
+    private Long imageId;
+    private boolean liked;
     private long likesCount;
-    private boolean likedByCurrentUser;
-    private long commentsCount;
 }
+
+

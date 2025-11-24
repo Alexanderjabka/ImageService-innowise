@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -40,7 +39,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
     private ObjectMapper objectMapper;
 
     private static final Long TEST_USER_ID = 1L;
+    private static final String TEST_USERNAME = "testuser";
     private static final Long OTHER_USER_ID = 2L;
+    private static final String OTHER_USERNAME = "otheruser";
 
     @BeforeEach
     void setUp() {
@@ -71,7 +72,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         MvcResult result = mockMvc.perform(multipart("/images")
                         .file(file)
                         .file(description)
-                        .with(authentication(createAuthentication(TEST_USER_ID)))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
@@ -101,7 +103,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(multipart("/images")
                         .file(file)
-                        .with(authentication(createAuthentication(TEST_USER_ID)))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.description").value(""));
@@ -111,7 +114,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
     void getImageById_ShouldReturnImageMetadata_WhenImageExists() throws Exception {
         Image image = createAndSaveImage(TEST_USER_ID, "Test Image");
 
-        mockMvc.perform(get("/images/{id}", image.getId()))
+        mockMvc.perform(get("/images/{id}", image.getId())
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId()))
                 .andExpect(jsonPath("$.description").value("Test Image"))
@@ -123,7 +128,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         byte[] imageContent = "test image binary content".getBytes();
         Image image = createAndSaveImageWithS3Content(TEST_USER_ID, "Test", imageContent, "image/jpeg");
 
-        MvcResult result = mockMvc.perform(get("/images/{id}/content", image.getId()))
+        MvcResult result = mockMvc.perform(get("/images/{id}/content", image.getId())
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Cache-Control"))
                 .andReturn();
@@ -139,7 +146,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         String s3Key = image.getUrl();
 
         mockMvc.perform(delete("/images/{id}", image.getId())
-                        .with(authentication(createAuthentication(TEST_USER_ID))))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isNoContent());
 
         assertThat(imageRepository.findById(image.getId())).isEmpty();
@@ -151,7 +159,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Image image = createAndSaveImage(TEST_USER_ID, "Protected Image");
 
         mockMvc.perform(delete("/images/{id}", image.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID))))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME))
                 .andExpect(status().isForbidden());
 
         assertThat(imageRepository.findById(image.getId())).isPresent();
@@ -166,7 +175,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         MvcResult result = mockMvc.perform(get("/user/images")
                         .param("page", "1")
                         .param("size", "10")
-                        .with(authentication(createAuthentication(TEST_USER_ID))))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(2))
                 .andExpect(jsonPath("$.items").isArray())
@@ -186,7 +196,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/images")
                         .param("page", "1")
-                        .param("size", "10"))
+                        .param("size", "10")
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(3))
                 .andExpect(jsonPath("$.items.length()").value(3));
@@ -200,7 +212,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/images")
                         .param("page", "1")
-                        .param("size", "10"))
+                        .param("size", "10")
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(15))
                 .andExpect(jsonPath("$.items.length()").value(10))
@@ -208,7 +222,9 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/images")
                         .param("page", "2")
-                        .param("size", "10"))
+                        .param("size", "10")
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items.length()").value(5));
     }
@@ -221,13 +237,17 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/images")
                         .param("sortBy", "uploadedAt")
-                        .param("sortDirection", "asc"))
+                        .param("sortDirection", "asc")
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].description").value("Image A"));
 
         mockMvc.perform(get("/images")
                         .param("sortBy", "uploadedAt")
-                        .param("sortDirection", "desc"))
+                        .param("sortDirection", "desc")
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].description").value("Image B"));
     }
@@ -237,7 +257,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Image image = createAndSaveImage(TEST_USER_ID, "Likeable Image");
 
         mockMvc.perform(post("/images/{id}/likes", image.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID))))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME))
                 .andExpect(status().isOk());
 
         assertThat(likeRepository.findByImageIdAndUserId(image.getId(), OTHER_USER_ID)).isPresent();
@@ -253,7 +274,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         likeRepository.save(like);
 
         mockMvc.perform(post("/images/{id}/likes", image.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID))))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME))
                 .andExpect(status().isOk());
 
         assertThat(likeRepository.findByImageIdAndUserId(image.getId(), OTHER_USER_ID)).isEmpty();
@@ -266,7 +288,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         request.setText("Great image!");
 
         mockMvc.perform(post("/images/{id}/comments", image.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID)))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
@@ -286,12 +309,14 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Comment comment = new Comment();
         comment.setImageId(image.getId());
         comment.setUserId(OTHER_USER_ID);
+        comment.setUsername(OTHER_USERNAME);
         comment.setText("My comment");
         comment.setCreatedAt(Instant.now());
         comment = commentRepository.save(comment);
 
         mockMvc.perform(delete("/images/{imageId}/comments/{commentId}", image.getId(), comment.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID))))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME))
                 .andExpect(status().isNoContent());
 
         assertThat(commentRepository.findById(comment.getId())).isEmpty();
@@ -303,12 +328,14 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Comment comment = new Comment();
         comment.setImageId(image.getId());
         comment.setUserId(OTHER_USER_ID);
+        comment.setUsername(OTHER_USERNAME);
         comment.setText("Other user's comment");
         comment.setCreatedAt(Instant.now());
         comment = commentRepository.save(comment);
 
         mockMvc.perform(delete("/images/{imageId}/comments/{commentId}", image.getId(), comment.getId())
-                        .with(authentication(createAuthentication(TEST_USER_ID))))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME))
                 .andExpect(status().isNotFound());
 
         assertThat(commentRepository.findById(comment.getId())).isPresent();
@@ -320,6 +347,7 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Comment comment = new Comment();
         comment.setImageId(image.getId());
         comment.setUserId(OTHER_USER_ID);
+        comment.setUsername(OTHER_USERNAME);
         comment.setText("Original text");
         comment.setCreatedAt(Instant.now());
         comment = commentRepository.save(comment);
@@ -328,7 +356,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         request.setText("Updated text");
 
         mockMvc.perform(put("/images/{imageId}/comments/{commentId}", image.getId(), comment.getId())
-                        .with(authentication(createAuthentication(OTHER_USER_ID)))
+                        .header("X-User-Id", OTHER_USER_ID)
+                        .header("X-User-Name", OTHER_USERNAME)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -343,6 +372,7 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         Comment comment = new Comment();
         comment.setImageId(image.getId());
         comment.setUserId(OTHER_USER_ID);
+        comment.setUsername(OTHER_USERNAME);
         comment.setText("Original");
         comment.setCreatedAt(Instant.now());
         comment = commentRepository.save(comment);
@@ -351,7 +381,8 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         request.setText("Hacked text");
 
         mockMvc.perform(put("/images/{imageId}/comments/{commentId}", image.getId(), comment.getId())
-                        .with(authentication(createAuthentication(TEST_USER_ID)))
+                        .header("X-User-Id", TEST_USER_ID)
+                        .header("X-User-Name", TEST_USERNAME)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -383,9 +414,5 @@ class ImageControllerIntegrationTest extends AbstractIntegrationTest {
         image.setUploadedAt(Instant.now());
         image.setUserId(userId);
         return imageRepository.save(image);
-    }
-
-    private org.springframework.security.core.Authentication createAuthentication(Long userId) {
-        return new org.springframework.security.authentication.TestingAuthenticationToken(userId, null, "USER");
     }
 }

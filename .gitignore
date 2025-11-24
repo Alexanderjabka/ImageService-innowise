@@ -38,6 +38,7 @@ build/
 localstack-data/logs/localstack_infra.err
 localstack-data/logs/localstack_infra.log
 localstack-data/
+localstack-data/cache/server.test.pem
 
 *.pem
 *.pem.crt

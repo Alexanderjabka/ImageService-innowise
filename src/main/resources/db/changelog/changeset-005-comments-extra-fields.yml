@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-comments-add-username-updated-at
+      author: io.github.Alexanderjabka
+      preConditions:
+        - onFail: CONTINUE
+        - not:
+            columnExists:
+              schemaName: gallery
+              tableName: comments
+              columnName: username
+        - not:
+            columnExists:
+              schemaName: gallery
+              tableName: comments
+              columnName: updated_at
+      changes:
+        - addColumn:
+            schemaName: gallery
+            tableName: comments
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  defaultValue: unknown
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addNotNullConstraint:
+            schemaName: gallery
+            tableName: comments
+            columnName: username
+            columnDataType: VARCHAR(255)
+        - addNotNullConstraint:
+            schemaName: gallery
+            tableName: comments
+            columnName: updated_at
+            columnDataType: TIMESTAMP
+
+

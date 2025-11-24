@@ -2,8 +2,11 @@ package io.github.alexanderjabka.imageservice.controller;
 
 import com.amazonaws.services.s3.model.S3Object;
 import io.github.alexanderjabka.imageservice.dto.CommentRequest;
+import io.github.alexanderjabka.imageservice.dto.CommentResponse;
 import io.github.alexanderjabka.imageservice.dto.ImageMetadataResponse;
+import io.github.alexanderjabka.imageservice.dto.LikeToggleResponse;
 import io.github.alexanderjabka.imageservice.dto.PageResponse;
+import io.github.alexanderjabka.imageservice.security.UserPrincipal;
 import io.github.alexanderjabka.imageservice.service.ImageService;
 import io.github.alexanderjabka.imageservice.service.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.List;
+import java.util.Objects;
 
 @RestController
 @Validated
@@ -43,17 +48,21 @@ public class ImageController {
             @RequestPart(value = "description", required = false) String description,
             Authentication authentication
     ) throws IOException {
-        Long userId = (Long) authentication.getPrincipal();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         String imageDescription = description != null ? description : "";
         
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(imageService.uploadImage(file, imageDescription, userId));
+                .body(imageService.uploadImage(file, imageDescription, principal.id()));
     }
 
     @GetMapping("/images/{id}")
-    public ResponseEntity<ImageMetadataResponse> getImageById(@PathVariable Long id) {
-        return ResponseEntity.ok(imageService.getImageMetadata(id));
+    public ResponseEntity<ImageMetadataResponse> getImageById(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity.ok(imageService.getImageMetadata(id, principal.id()));
     }
 
     @GetMapping("/images/{id}/content")
@@ -78,8 +87,8 @@ public class ImageController {
 
     @DeleteMapping("/images/{id}")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id, Authentication authentication) {
-        Long userId = (Long) authentication.getPrincipal();
-        imageService.deleteImage(id, userId);
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        imageService.deleteImage(id, principal.id());
         return ResponseEntity.noContent().build();
     }
 
@@ -92,8 +101,9 @@ public class ImageController {
             @RequestParam(defaultValue = "desc") String sortDirection,
             Authentication authentication
     ) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(imageService.getUserImagesWithPagination(
-                (Long) authentication.getPrincipal(), page, size, limit, sortBy, sortDirection));
+                principal.id(), page, size, limit, sortBy, sortDirection));
     }
 
     @GetMapping("/images")
@@ -102,26 +112,30 @@ public class ImageController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) Integer limit,
             @RequestParam(defaultValue = "uploadedAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection
+            @RequestParam(defaultValue = "desc") String sortDirection,
+            Authentication authentication
     ) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(imageService.getAllImagesWithPagination(
-                page, size, limit, sortBy, sortDirection));
+                principal.id(), page, size, limit, sortBy, sortDirection));
     }
 
     @PostMapping("/images/{id}/likes")
-    public ResponseEntity<Void> toggleLike(@PathVariable Long id, Authentication authentication) {
-        imageService.toggleLike(id, (Long) authentication.getPrincipal());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<LikeToggleResponse> toggleLike(@PathVariable Long id, Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity.ok(imageService.toggleLike(id, principal.id()));
     }
 
     @PostMapping("/images/{id}/comments")
-    public ResponseEntity<Void> addComment(
+    public ResponseEntity<CommentResponse> addComment(
             @PathVariable Long id,
             @RequestBody @Valid CommentRequest request,
             Authentication authentication
     ) {
-        imageService.addComment(id, (Long) authentication.getPrincipal(), request.getText());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(imageService.addComment(id, principal.id(), principal.username(), request.getText()));
     }
 
     @DeleteMapping("/images/{id}/comments/{commentId}")
@@ -130,18 +144,27 @@ public class ImageController {
             @PathVariable Long commentId,
             Authentication authentication
     ) {
-        imageService.deleteComment(commentId, (Long) authentication.getPrincipal());
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        imageService.deleteComment(commentId, principal.id());
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/images/{id}/comments/{commentId}")
-    public ResponseEntity<Void> updateComment(
+    public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long id,
             @PathVariable Long commentId,
             @RequestBody @Valid CommentRequest request,
             Authentication authentication
     ) {
-        imageService.updateComment(commentId, (Long) authentication.getPrincipal(), request.getText());
-        return ResponseEntity.ok().build();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity.ok(
+                imageService.updateComment(commentId, principal.id(), request.getText())
+        );
+    }
+
+    @GetMapping("/images/{id}/comments")
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long id, Authentication authentication) {
+        Objects.requireNonNull(authentication, "Authentication is required");
+        return ResponseEntity.ok(imageService.getComments(id));
     }
 }

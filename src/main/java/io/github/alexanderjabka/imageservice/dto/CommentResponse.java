@@ -13,13 +13,14 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImageMetadataResponse {
+public class CommentResponse {
     private Long id;
-    private String description;
-    private Instant uploadedAt;
+    private Long imageId;
     private Long userId;
-    private String contentUrl;
-    private long likesCount;
-    private boolean likedByCurrentUser;
-    private long commentsCount;
+    private String username;
+    private String text;
+    private Instant createdAt;
+    private Instant updatedAt;
 }
+
+
