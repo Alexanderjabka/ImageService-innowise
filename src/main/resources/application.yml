@@ -7,10 +7,16 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:gallery}}
-    username: ${SPRING_DATASOURCE_USERNAME:gallery}
-    password: ${SPRING_DATASOURCE_PASSWORD:gallerypass}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -45,12 +51,12 @@ eureka:
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY:test}
-      secret-key: ${AWS_SECRET_KEY:test}
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     region:
-      static: ${AWS_REGION:us-east-1}
+      static: ${AWS_REGION}
     s3:
-      endpoint: ${AWS_S3_ENDPOINT:http://localstack:4566}
-      bucket: ${AWS_S3_BUCKET:images}
+      endpoint: ${AWS_S3_ENDPOINT}
+      bucket: ${AWS_S3_BUCKET}
     stack:
       auto: false
