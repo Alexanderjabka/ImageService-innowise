@@ -35,6 +35,7 @@ public class ImageService {
     private final S3Service s3Service;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final ImageEventsProducer imageEventsProducer;
 
     public ImageMetadataResponse uploadImage(MultipartFile file, String description, Long userId) throws IOException {
         String key = s3Service.upload(file);
@@ -139,6 +140,7 @@ public class ImageService {
         if (existing.isPresent()) {
             likeRepository.delete(existing.get());
             liked = false;
+            imageEventsProducer.sendRemoveLike(imageId, userId);
         } else {
             likeRepository.save(Like.builder()
                     .imageId(imageId)
@@ -146,6 +148,7 @@ public class ImageService {
                     .createdAt(Instant.now())
                     .build());
             liked = true;
+            imageEventsProducer.sendAddLike(imageId, userId);
         }
 
         long likesCount = likeRepository.countByImageId(imageId);
@@ -168,6 +171,7 @@ public class ImageService {
                 .createdAt(now)
                 .updatedAt(now)
                 .build());
+        imageEventsProducer.sendCreateComment(imageId, userId, comment.getId());
         return toCommentResponse(comment);
     }
 
@@ -175,6 +179,7 @@ public class ImageService {
         Comment comment = commentRepository.findByIdAndUserId(commentId, userId)
                 .orElseThrow(() -> new CommentNotFoundException(commentId));
         commentRepository.delete(comment);
+        imageEventsProducer.sendRemoveComment(comment.getImageId(), comment.getUserId(), comment.getId());
     }
 
     public CommentResponse updateComment(Long commentId, Long userId, String text) {
