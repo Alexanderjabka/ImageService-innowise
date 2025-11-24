@@ -6,10 +6,12 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import io.github.alexanderjabka.imageservice.config.TestSecurityConfig;
+import io.github.alexanderjabka.imageservice.service.ImageEventsProducer;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
@@ -30,6 +32,9 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected MockMvc mockMvc;
+
+    @MockBean
+    protected ImageEventsProducer imageEventsProducer;
 
     protected static PostgreSQLContainer<?> postgresContainer;
     protected static LocalStackContainer localStackContainer;

@@ -52,6 +52,9 @@ class ImageServiceTest {
     @Mock
     private CommentRepository commentRepository;
 
+    @Mock
+    private ImageEventsProducer imageEventsProducer;
+
     @InjectMocks
     private ImageService imageService;
 
